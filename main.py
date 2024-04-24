@@ -25,7 +25,8 @@ def center_window(root, width, height):
     root.geometry(f'{width}x{height}+{center_x}+{center_y}')
 
 
-def get_pdf_path():
+def get_p
+    df_path():
     root = tk.Tk()
     root.withdraw()  # Hide the main window
     messagebox.showinfo("Select PDF", "Please select your schedule PDF")
@@ -162,7 +163,7 @@ def get_resource_path(relative_path):
 
 def get_calendar_service():
     scopes = ['https://www.googleapis.com/auth/calendar.events']
-    credentials_path = get_resource_path('credentials.json')  # Get the path to the credentials file
+    credentials_path = get_resource_path('credentials.json')
     flow = InstalledAppFlow.from_client_secrets_file(credentials_path, scopes=scopes)
     credentials = flow.run_local_server(port=0)
     service = build('calendar', 'v3', credentials=credentials)
