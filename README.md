@@ -6,7 +6,7 @@ Este proyecto es una aplicación de escritorio desarrollada en Python con Tkinte
 
 Esta aplicación resuelve un caso muy específico y para que funcione la tabla con los horarios el pdf deberá tener esta estructura:
 
-![Estructura de nuestro PDF](https://raw.githubusercontent.com/FluxFeint/marlendario/main/estructuraReadMe.png)
+![Estructura de nuestro PDF](https://raw.githubusercontent.com/FluxFeint/marlendario/main/recursos/estructuraReadMe.png)
 
 ### Características
 - **Selección de Archivo PDF:** Permite a los usuarios cargar un archivo PDF desde su sistema para extraer horarios.
