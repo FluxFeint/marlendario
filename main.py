@@ -13,7 +13,6 @@ from tkcalendar import Calendar
 def initialize_root(title, width, height):
     root = tk.Tk()
     root.title(title)
-    root.iconbitmap('iconopythonprueba.ico')
     center_window(root, width, height)
     return root
 
