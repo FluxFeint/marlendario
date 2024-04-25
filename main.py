@@ -13,6 +13,7 @@ from tkcalendar import Calendar
 def initialize_root(title, width, height):
     root = tk.Tk()
     root.title(title)
+    root.iconbitmap('iconopythonprueba.ico')
     center_window(root, width, height)
     return root
 
@@ -27,11 +28,19 @@ def center_window(root, width, height):
 
 def get_pdf_path():
     root = tk.Tk()
-    root.withdraw()  # Hide the main window
+    root.withdraw()  # Oculta la ventana principal
     messagebox.showinfo("Selecciona tu horario", "Por favor selecciona el PDF con tu horario.")
     file_path = filedialog.askopenfilename(title="Selecciona tu horario", filetypes=[("PDF files", "*.pdf")])
-    root.destroy()
-    return file_path
+    if file_path == "":  # Si el usuario no selecciona un archivo y cierra la ventana
+        root.deiconify()  # Muestra la ventana oculta para poder mostrar otra messagebox
+        user_choice = messagebox.askquestion("No has escogido tu horario", "¿Te gustaría volver a la selección?")
+        if user_choice == 'yes':
+            file_path = filedialog.askopenfilename(title="Selecciona tu horario", filetypes=[("PDF files", "*.pdf")])
+        root.destroy()
+        return file_path
+    else:
+        root.destroy()
+        return file_path
 
 
 def extract_all_ids(pdf_path):
@@ -109,7 +118,7 @@ def normalize_schedule(data):
 
 
 def get_week_start_from_calendar():
-    root = initialize_root("Selecciona la semana", 400, 400)
+    root = initialize_root("Selecciona la semana", 400, 350)
     today = datetime.now()  # Get today's date
     cal = Calendar(root, selectmode='day', year=today.year, month=today.month, day=today.day)
     cal.pack(pady=20, fill="both", expand=True)
@@ -190,7 +199,7 @@ def create_calendar_event(service, summary, start_datetime, end_datetime):
 def display_success_message():
     root = initialize_root("Confirmación", 300, 100)
 
-    label = tk.Label(root, text="Su horario laboral se ha creado en Google Calendar con éxito", wraplength=250)
+    label = tk.Label(root, text="Su horario laboral se ha añadido a Google Calendar con éxito", wraplength=250)
     label.pack(pady=10, padx=10)
 
     ok_button = ttk.Button(root, text="Ok", command=root.destroy)
