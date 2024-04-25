@@ -37,6 +37,9 @@ Instalación
 
 `pip install -r requirements.txt`
 
+- Necesitaras un archivo con credenciales con permisos para la api de Google Calendars que podras obtener aquí: https://console.cloud.google.com/projectselector2/apis/dashboard
+
+
 ### Uso
 Para ejecutar la aplicación, navega al directorio del proyecto y ejecuta:
 `python main.py`
