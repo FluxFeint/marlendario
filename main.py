@@ -10,13 +10,14 @@ import re
 from tkcalendar import Calendar
 
 
+# Inicia la ventana de aplicación principal
 def initialize_root(title, width, height):
     root = tk.Tk()
     root.title(title)
     center_window(root, width, height)
     return root
 
-
+# Centra la ventana principal en la pantalla
 def center_window(root, width, height):
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -24,14 +25,14 @@ def center_window(root, width, height):
     center_y = int((screen_height - height) / 2)
     root.geometry(f'{width}x{height}+{center_x}+{center_y}')
 
-
+# Abre una ventana de dialogo para que el usuario seleccione su archivo PDF que contiene el horario
 def get_pdf_path():
     root = tk.Tk()
-    root.withdraw()  # Oculta la ventana principal
+    root.withdraw()
     messagebox.showinfo("Selecciona tu horario", "Por favor selecciona el PDF con tu horario.")
     file_path = filedialog.askopenfilename(title="Selecciona tu horario", filetypes=[("PDF files", "*.pdf")])
-    if file_path == "":  # Si el usuario no selecciona un archivo y cierra la ventana
-        root.deiconify()  # Muestra la ventana oculta para poder mostrar otra messagebox
+    if file_path == "":
+        root.deiconify()
         user_choice = messagebox.askquestion("No has escogido tu horario", "¿Te gustaría volver a la selección?")
         if user_choice == 'yes':
             file_path = filedialog.askopenfilename(title="Selecciona tu horario", filetypes=[("PDF files", "*.pdf")])
@@ -41,7 +42,7 @@ def get_pdf_path():
         root.destroy()
         return file_path
 
-
+# Extrae todas las IDs únicas del PDF
 def extract_all_ids(pdf_path):
     ids = set()
     with pdfplumber.open(pdf_path) as pdf:
@@ -63,7 +64,7 @@ def extract_all_ids(pdf_path):
                 print(f"No table found on page {page_number + 1}")
     return sorted(list(ids))
 
-
+# Deja al usuario escoger su ID o nombre de una lista.
 def select_id_from_list(ids):
     root = initialize_root("¿Quién eres?", 250, 140)
     root.focus_force()  # Force the window to take focus
@@ -77,7 +78,7 @@ def select_id_from_list(ids):
     root.mainloop()
     return selected_id.get()
 
-
+# Extrae la fila del PDF con la ID que el usuario haya especificado
 def extract_row_by_id(pdf_path, target_id):
     headers = ["ID", "LUNES IN", "LUNES OUT", "MARTES IN", "MARTES OUT", "MIÉRCOLES IN", "MIÉRCOLES OUT",
                "JUEVES IN", "JUEVES OUT", "VIERNES IN", "VIERNES OUT", "SÁBADO IN", "SÁBADO OUT", "DOMINGO IN",
@@ -91,12 +92,13 @@ def extract_row_by_id(pdf_path, target_id):
                         return dict(zip(headers, row))
     return None
 
-
+# Normaliza las entradas para tener uniformidad de datos
 def normalize_schedule(data):
     days = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]
     schedule = {}
     time_pattern = re.compile(r'^\d{2}:\d{2}$')
 
+    # Función de ayuda para que todas las horas tengan un formato HH:MM
     def format_time(time_str):
         if time_str and ':' in time_str:
             parts = time_str.split(':')
@@ -105,6 +107,7 @@ def normalize_schedule(data):
             return ':'.join(parts)
         return time_str
 
+    # Normaliza el horario para asegurarnos de que todos los tiempos son validos y tienen el formato adecuado
     for day in days:
         in_key = f'{day} IN'
         out_key = f'{day} OUT'
@@ -115,13 +118,14 @@ def normalize_schedule(data):
         schedule[day] = {'IN': in_time, 'OUT': out_time}
     return schedule
 
-
+    #Abre el calendario para que el usuario pueda escoger a qué semana quiere añadir el horario
 def get_week_start_from_calendar():
     root = initialize_root("Selecciona la semana", 400, 350)
     today = datetime.now()  # Get today's date
     cal = Calendar(root, selectmode='day', year=today.year, month=today.month, day=today.day)
     cal.pack(pady=20, fill="both", expand=True)
 
+    # Función que captura la fecha seleccionada y nos de el comienzo de la semana
     def grab_date():
         selected_date = cal.selection_get()
         start_of_week = selected_date - timedelta(days=selected_date.weekday())
@@ -132,7 +136,7 @@ def get_week_start_from_calendar():
     select_button = ttk.Button(root, text="Selecciona la semana", command=grab_date)
     select_button.pack(pady=20)
 
-    # Make sure the window pops up and stays on top until a date is selected
+    # Esto nos asegura que la ventana queda en el "top" hasta que se seleccione la fecha
     root.attributes('-topmost', True)
     root.mainloop()
     root.attributes('-topmost', False)
@@ -140,6 +144,7 @@ def get_week_start_from_calendar():
     return user_date.get()
 
 
+    #Funcion de ayuda que se asegura de que el formato es HH:MM para los eventos del calendario
 def format_time(time_str):
     if time_str and ':' in time_str:
         parts = time_str.split(':')
@@ -148,7 +153,7 @@ def format_time(time_str):
         return ':'.join(parts)
     return time_str
 
-
+# Convierte el horario normalizado en eventos de calendario específicos según la fecha de inicio seleccionada
 def format_schedule_for_calendar(normalized_schedule, start_date):
     formatted_schedule = {}
     for day, times in normalized_schedule.items():
@@ -161,13 +166,12 @@ def format_schedule_for_calendar(normalized_schedule, start_date):
             formatted_schedule[day] = {'IN': in_datetime, 'OUT': out_datetime}
     return formatted_schedule
 
-
+#Obtiene la ruta absoluta al recurso, adaptándose tanto para entornos de desarrollo como de producción con PyInstaller.
 def get_resource_path(relative_path):
-    """ Get the absolute path to the resource, works for dev and for PyInstaller """
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
-
+# Configura y autentica el acceso a la API de Google Calendar.
 def get_calendar_service():
     scopes = ['https://www.googleapis.com/auth/calendar.events']
     credentials_path = get_resource_path('credentials.json')
@@ -176,7 +180,7 @@ def get_calendar_service():
     service = build('calendar', 'v3', credentials=credentials)
     return service
 
-
+# Crea un evento de calendario utilizando la API de Google Calendar.
 def create_calendar_event(service, summary, start_datetime, end_datetime):
     event = {
         'summary': summary,
@@ -194,7 +198,7 @@ def create_calendar_event(service, summary, start_datetime, end_datetime):
     print(f"Event created: {event.get('htmlLink')}")
     return summary, event.get('htmlLink')
 
-
+# Muestra un mensaje de éxito al usuario confirmando que se han agregado los eventos del calendario.
 def display_success_message():
     root = initialize_root("Confirmación", 300, 100)
 
@@ -222,7 +226,7 @@ def display_success_message():
 #     exit_button.pack(side=tk.BOTTOM, pady=10)
 #     root.mainloop()
 
-
+# La función principal que organiza el flujo de la aplicación.
 def main():
     pdf_path = get_pdf_path()  # Solicita al usuario seleccionar el archivo PDF
     if not pdf_path:
