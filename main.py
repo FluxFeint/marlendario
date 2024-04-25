@@ -25,12 +25,11 @@ def center_window(root, width, height):
     root.geometry(f'{width}x{height}+{center_x}+{center_y}')
 
 
-def get_p
-    df_path():
+def get_pdf_path():
     root = tk.Tk()
     root.withdraw()  # Hide the main window
-    messagebox.showinfo("Select PDF", "Please select your schedule PDF")
-    file_path = filedialog.askopenfilename(title="Select PDF file", filetypes=[("PDF files", "*.pdf")])
+    messagebox.showinfo("Selecciona tu horario", "Por favor selecciona el PDF con tu horario.")
+    file_path = filedialog.askopenfilename(title="Selecciona tu horario", filetypes=[("PDF files", "*.pdf")])
     root.destroy()
     return file_path
 
@@ -58,14 +57,14 @@ def extract_all_ids(pdf_path):
 
 
 def select_id_from_list(ids):
-    root = initialize_root("Select Your ID", 250, 150)
+    root = initialize_root("¿Quién eres?", 250, 140)
     root.focus_force()  # Force the window to take focus
     selected_id = tk.StringVar(root)
-    tk.Label(root, text="Please select your ID:").pack(pady=10)
+    tk.Label(root, text="Por favor escoge tu nombre en la lista:").pack(pady=10)
     combo_box = ttk.Combobox(root, values=ids, textvariable=selected_id, state="readonly")
     combo_box.pack(pady=5)
-    combo_box.set("Choose an ID")
-    button = ttk.Button(root, text="Confirm", command=root.destroy)
+    combo_box.set("Elige tu nombre")
+    button = ttk.Button(root, text="Confirmar", command=root.destroy)
     button.pack(pady=20)
     root.mainloop()
     return selected_id.get()
@@ -110,7 +109,7 @@ def normalize_schedule(data):
 
 
 def get_week_start_from_calendar():
-    root = initialize_root("Select a Week", 400, 400)
+    root = initialize_root("Selecciona la semana", 400, 400)
     today = datetime.now()  # Get today's date
     cal = Calendar(root, selectmode='day', year=today.year, month=today.month, day=today.day)
     cal.pack(pady=20, fill="both", expand=True)
@@ -122,7 +121,7 @@ def get_week_start_from_calendar():
         root.quit()
 
     user_date = tk.StringVar(root)
-    select_button = ttk.Button(root, text="Select Week", command=grab_date)
+    select_button = ttk.Button(root, text="Selecciona la semana", command=grab_date)
     select_button.pack(pady=20)
 
     # Make sure the window pops up and stays on top until a date is selected
@@ -185,34 +184,56 @@ def create_calendar_event(service, summary, start_datetime, end_datetime):
     }
     event = service.events().insert(calendarId='primary', body=event).execute()
     print(f"Event created: {event.get('htmlLink')}")
-    return (summary, event.get('htmlLink'))
+    return summary, event.get('htmlLink')
 
 
-def display_events(events):
-    root = initialize_root("Scheduled Events", 900, 300)
-    frame = tk.Frame(root)
-    frame.pack(fill=tk.BOTH, expand=True)
-    scrollbar = tk.Scrollbar(frame)
-    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    listbox = tk.Listbox(frame, yscrollcommand=scrollbar.set, width=50, height=15)
-    for event in events:
-        listbox.insert(tk.END, f"{event[0]}: {event[1]}")
-    listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    scrollbar.config(command=listbox.yview)
-    exit_button = ttk.Button(root, text="Close", command=root.destroy)
-    exit_button.pack(side=tk.BOTTOM, pady=10)
+def display_success_message():
+    root = initialize_root("Confirmación", 300, 100)
+
+    label = tk.Label(root, text="Su horario laboral se ha creado en Google Calendar con éxito", wraplength=250)
+    label.pack(pady=10, padx=10)
+
+    ok_button = ttk.Button(root, text="Ok", command=root.destroy)
+    ok_button.pack(pady=10)
+
     root.mainloop()
 
 
+# def display_events(events):
+#     root = initialize_root("Scheduled Events", 900, 300)
+#     frame = tk.Frame(root)
+#     frame.pack(fill=tk.BOTH, expand=True)
+#     scrollbar = tk.Scrollbar(frame)
+#     scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+#     listbox = tk.Listbox(frame, yscrollcommand=scrollbar.set, width=50, height=15)
+#     for event in events:
+#         listbox.insert(tk.END, f"{event[0]}: {event[1]}")
+#     listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+#     scrollbar.config(command=listbox.yview)
+#     exit_button = ttk.Button(root, text="Close", command=root.destroy)
+#     exit_button.pack(side=tk.BOTTOM, pady=10)
+#     root.mainloop()
+
+
 def main():
-    pdf_path = get_pdf_path()
+    pdf_path = get_pdf_path()  # Solicita al usuario seleccionar el archivo PDF
     if not pdf_path:
         print("No file selected.")
         return
 
-    # Assign the ID directly, skipping the selection process
-    target_id = "MARIA LOZANO PERALTA"
+    # Extrae todos los IDs del archivo PDF
+    ids = extract_all_ids(pdf_path)
+    if not ids:
+        print("No IDs found in the document.")
+        return
 
+    # Permite al usuario seleccionar un ID de la lista
+    target_id = select_id_from_list(ids)
+    if not target_id:
+        print("No ID selected.")
+        return
+
+    # Extrae la fila correspondiente al ID seleccionado
     matched_row = extract_row_by_id(pdf_path, target_id)
     if matched_row:
         normalized_schedule = normalize_schedule(matched_row)
@@ -229,11 +250,12 @@ def main():
                 event_details = create_calendar_event(service, summary, times['IN'], times['OUT'])
                 event_links.append(event_details)
         if event_links:
-            display_events(event_links)
+            display_success_message()
         else:
             print("No events were created.")
     else:
         print(f"No data found for ID: {target_id}")
+
 
 if __name__ == "__main__":
     main()
